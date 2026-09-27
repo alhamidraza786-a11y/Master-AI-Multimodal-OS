@@ -17,7 +17,6 @@ from gtts import gTTS
 from PIL import Image, ImageDraw
 import edge_tts
 
-
 # ==========================================
 # 0. Config Loader
 # ==========================================
@@ -29,9 +28,8 @@ def get_config(key, default=None):
         pass
     return os.environ.get(key, default)
 
-
 # ==========================================
-# 1. Google Drive & PDF (Bilingual)
+# 1. Google Drive & PDF
 # ==========================================
 def get_google_drive_service():
     sa = get_config("GOOGLE_SERVICE_ACCOUNT_JSON")
@@ -46,20 +44,12 @@ def get_google_drive_service():
         print(f"Drive error: {e}")
         return None
 
-
-KEYWORDS_DRIVE = [
-    "drive", "google drive", "book", "library", "pdf", "kitab", "kitaab", "kitaabein",
-    "ڈرائیو", "گوگل ڈرائیو", "کتاب", "کتابیں", "کتابوں", "لائبریری", "پی ڈی ایف", "فائل"
-]
-KEYWORDS_IMAGE = [
-    "image", "picture", "graphic", "infographic", "poster", "banner", "diagram", "design",
-    "تصویر", "ڈیزائن", "انفوگرافک", "پوسٹر", "بینر", "گرافک", "نقشہ", "چارٹ", "خاکہ"
-]
-KEYWORDS_VOICE = [
-    "voice", "audio", "sound", "speak", "speech", "awaaz", "bol", "parh",
-    "آواز", "وائس", "آڈیو", "بولیں", "سنائیں", "پڑھیں"
-]
-
+KEYWORDS_DRIVE = ["drive", "google drive", "book", "library", "pdf", "kitab", "kitaab",
+                  "ڈرائیو", "کتاب", "کتابیں", "لائبریری", "پی ڈی ایف", "فائل"]
+KEYWORDS_IMAGE = ["image", "picture", "graphic", "infographic", "poster", "banner", "diagram",
+                  "تصویر", "ڈیزائن", "انفوگرافک", "پوسٹر", "بینر", "گرافک", "نقشہ", "خاکہ"]
+KEYWORDS_VOICE = ["voice", "audio", "sound", "speak", "speech", "awaaz", "bol", "parh",
+                  "آواز", "وائس", "آڈیو", "بولیں", "سنائیں", "پڑھیں"]
 
 def has_kw(text, kw_list):
     if not text:
@@ -67,14 +57,10 @@ def has_kw(text, kw_list):
     t = text.lower()
     return any(k.lower() in t for k in kw_list)
 
-
-STOPWORDS = {
-    "کا","کی","کے","ہے","ہیں","میں","سے","کو","اور","پر","ایک","کیا","کیسے","کیوں",
-    "کہاں","کون","کب","کہ","نے","نہ","بھی","تو","ہی","یہ","وہ","اس","ان","اپنی","اپنا",
-    "the","a","an","is","are","was","were","of","in","on","at","to","from","for","with",
-    "by","about","as","into","and","or","but","if","then","what","which","who","this","that"
-}
-
+STOPWORDS = {"کا","کی","کے","ہے","ہیں","میں","سے","کو","اور","پر","ایک","کیا","کیسے",
+             "کیوں","کہاں","کون","کب","کہ","نے","نہ","بھی","تو","ہی","یہ","وہ","اس","ان",
+             "the","a","an","is","are","was","were","of","in","on","at","to","from","for","with",
+             "by","about","as","into","and","or","but","if","then","what","which","who","this"}
 
 def extract_words(query):
     if not query:
@@ -82,7 +68,6 @@ def extract_words(query):
     for ch in "؟?.,!،:;\"'()[]{}":
         query = query.replace(ch, " ")
     return [w for w in query.split() if len(w) > 2 and w.lower() not in STOPWORDS]
-
 
 @st.cache_data(ttl=300, show_spinner=False)
 def search_drive_books(user_query, max_files=10, max_pages=8):
@@ -138,9 +123,8 @@ def search_drive_books(user_query, max_files=10, max_pages=8):
     except Exception as e:
         return None, f"error:{e}"
 
-
 # ==========================================
-# 2. Image Generation
+# 2. Image Generation (WITH TRANSLATION FIX)
 # ==========================================
 def generate_ai_image(prompt_text, style="infographic", width=1024, height=600):
     style_map = {
@@ -166,7 +150,6 @@ def generate_ai_image(prompt_text, style="infographic", width=1024, height=600):
         print(f"Image error: {e}")
     return None
 
-
 def fallback_image(title, size=(900, 500)):
     try:
         img = Image.new('RGB', size, color='#0f172a')
@@ -180,7 +163,6 @@ def fallback_image(title, size=(900, 500)):
         return buf
     except Exception:
         return None
-
 
 # ==========================================
 # 3. Voice Engine
@@ -205,12 +187,12 @@ VOICE_SPEEDS = {"🐢 بہت آہستہ": "-40%", "🚶 آہستہ": "-20%", "�
                 "🏃 تیز": "+30%", "🚀 بہت تیز": "+50%"}
 VOICE_PITCHES = {"🔽 گہری": "-15Hz", "▶️ نارمل": "+0Hz", "🔼 اونچی": "+15Hz"}
 
-
 def detect_lang(text):
-    if any('\u0600' <= c <= '\u06FF' for c in text): return 'ur'
-    if any('\u0900' <= c <= '\u097F' for c in text): return 'hi'
+    if any('\u0600' <= c <= '\u06FF' for c in text):
+        return 'ur'
+    if any('\u0900' <= c <= '\u097F' for c in text):
+        return 'hi'
     return 'en'
-
 
 async def _edge_async(text, voice, rate, pitch):
     c = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
@@ -219,7 +201,6 @@ async def _edge_async(text, voice, rate, pitch):
         if chunk["type"] == "audio":
             buf.extend(chunk["data"])
     return bytes(buf)
-
 
 def generate_voice_edge(text, voice, rate="+0%", pitch="+0Hz"):
     def _thread():
@@ -241,7 +222,6 @@ def generate_voice_edge(text, voice, rate="+0%", pitch="+0Hz"):
         print(f"Edge error: {e}")
     return None
 
-
 def generate_voice_gtts(text, lang=None):
     try:
         clean = text.replace("*", "").replace("#", "").replace("`", "")
@@ -257,7 +237,6 @@ def generate_voice_gtts(text, lang=None):
     except Exception:
         return None
 
-
 def create_voice(text, voice_id=None, rate="+0%", pitch="+0Hz"):
     if voice_id:
         a = generate_voice_edge(text, voice_id, rate, pitch)
@@ -265,19 +244,20 @@ def create_voice(text, voice_id=None, rate="+0%", pitch="+0Hz"):
             return a
     return generate_voice_gtts(text)
 
-
 # ==========================================
 # 4. YouTube, Whisper, OCR, PDF
 # ==========================================
 def extract_yt_id(url):
     try:
-        if "youtu.be/" in url: return url.split("youtu.be/")[1].split("?")[0].split("&")[0]
-        if "v=" in url: return url.split("v=")[1].split("&")[0]
-        if "shorts/" in url: return url.split("shorts/")[1].split("?")[0]
+        if "youtu.be/" in url:
+            return url.split("youtu.be/")[1].split("?")[0].split("&")[0]
+        if "v=" in url:
+            return url.split("v=")[1].split("&")[0]
+        if "shorts/" in url:
+            return url.split("shorts/")[1].split("?")[0]
         return url.strip()
     except Exception:
         return None
-
 
 def get_yt_transcript(url, langs=("ur", "hi", "en")):
     try:
@@ -310,7 +290,6 @@ def get_yt_transcript(url, langs=("ur", "hi", "en")):
     except Exception as e:
         return None, f"Error: {e}"
 
-
 def transcribe_whisper(audio_bytes, filename, language=None):
     try:
         client = Groq(api_key=groq_api_key)
@@ -322,14 +301,15 @@ def transcribe_whisper(audio_bytes, filename, language=None):
     except Exception as e:
         return f"⚠️ {e}"
 
-
 def ocr_image(image_bytes, extra=""):
     try:
         client = Groq(api_key=groq_api_key)
         b64 = base64.b64encode(image_bytes).decode()
         mime = "image/jpeg"
-        if image_bytes[:8].startswith(b'\x89PNG'): mime = "image/png"
-        elif image_bytes[:4] == b'RIFF': mime = "image/webp"
+        if image_bytes[:8].startswith(b'\x89PNG'):
+            mime = "image/png"
+        elif image_bytes[:4] == b'RIFF':
+            mime = "image/webp"
         prompt = ("Extract ALL text from this image exactly as it appears. "
                   "Preserve original language (Urdu→Urdu, English→English). No commentary. " + extra)
         chat = client.chat.completions.create(
@@ -343,7 +323,6 @@ def ocr_image(image_bytes, extra=""):
         return chat.choices[0].message.content
     except Exception as e:
         return f"⚠️ {e}"
-
 
 def extract_pdf_text(pdf_bytes, max_pages=20):
     try:
@@ -360,371 +339,312 @@ def extract_pdf_text(pdf_bytes, max_pages=20):
     except Exception as e:
         return f"PDF error: {e}"
 
-
 # ==========================================
 # 5. Streamlit Config
 # ==========================================
 st.set_page_config(page_title="Master AI Multimodal OS", page_icon="🧠",
                    layout="wide", initial_sidebar_state="expanded")
 
-
 # ==========================================
-# 6. UNIVERSAL SECTIONS CONFIG (76 شعبے)
+# 6. UNIVERSAL SECTIONS CONFIG (76 Sections)
 # ==========================================
-# Format: "name": (caption, [fields], expert_role)
-# fields: (type, label, key) where type = "tx" (text), "ta" (textarea), "se" (select)
 SECTIONS_CONFIG = {
-    # 🏥 MEDICAL
-    "🏥 ہیومن میڈیسن": (
-        "امراض، علامات، علاج، نسخے / Human Medicine",
-        [("ta", "علامات / Symptoms", "sym", "مثلاً: بخار، کھانسی، سر درد"),
+    # Medical
+    "🏥 ہیومن میڈیسن": ("امراض، علامات، علاج، نسخے",
+        [("ta", "علامات / Symptoms", "sym", "مثلاً: بخار، کھانسی"),
          ("tx", "عمر / Age", "age", "مثلاً: 35"),
-         ("se", "جنس / Gender", "gen", ["مرد/Male", "خاتون/Female", "بچہ/Child"]),
-         ("ta", "اضافی / Extra", "ext", "")],
-        "senior medical doctor providing diagnosis, treatment plan, prescriptions with dosage, and prevention"
-    ),
-    "🐄 ویٹرنری میڈیسن": (
-        "جانوروں کی بیماریاں، علاج / Veterinary Medicine",
+         ("se", "جنس / Gender", "gen", ["مرد/Male", "خاتون/Female", "بچہ/Child"])],
+        "senior medical doctor providing diagnosis, treatment, prescriptions with dosage"),
+    "🐄 ویٹرنری میڈیسن": ("جانوروں کی بیماریاں، علاج",
         [("tx", "جانور / Animal", "animal", "گائے، بکری، کتا"),
          ("ta", "علامات / Symptoms", "sym", ""),
          ("tx", "عمر / Age", "age", "")],
-        "expert veterinarian providing animal diagnosis, treatment, surgery guidance"
-    ),
-    "💊 فارماسی / دوائی": (
-        "دوائیں، ڈوز، تعامل / Pharmacy",
+        "expert veterinarian providing animal diagnosis, treatment, surgery guidance"),
+    "💊 فارماسی / دوائی": ("دوائیں، ڈوز، تعامل",
         [("tx", "دوائی / Medicine", "med", ""),
          ("ta", "استعمال / Purpose", "purp", "")],
-        "clinical pharmacist explaining medicine, dosage, interactions, side effects, contraindications"
-    ),
-    "🧬 جینیٹکس / DNA": (
-        "وارثت، جین / Genetics",
+        "clinical pharmacist explaining medicine, dosage, interactions, side effects"),
+    "🧬 جینیٹکس / DNA": ("وارثت، جین",
         [("ta", "سوال / Question", "q", "")],
-        "geneticist explaining inheritance, DNA, mutations, genetic disorders, testing"
-    ),
-    "🔬 بائیو ٹیکنالوجی": (
-        "جینیٹکس، لیب ورک / Biotechnology",
+        "geneticist explaining inheritance, DNA, mutations, genetic disorders"),
+    "🔬 بائیو ٹیکنالوجی": ("جینیٹکس، لیب ورک",
         [("ta", "موضوع / Topic", "t", "")],
-        "biotechnologist covering lab techniques, genetic engineering, CRISPR, bioprocesses"
-    ),
-
-    # 🏗️ ENGINEERING
-    "🏗️ سول انجینئرنگ": (
-        "عمارتیں، پل، سڑکیں / Civil Engineering",
+        "biotechnologist covering lab techniques, genetic engineering, CRISPR"),
+    # Engineering
+    "🏗️ سول انجینئرنگ": ("عمارتیں، پل، سڑکیں",
         [("ta", "منصوبہ / Project", "p", ""),
          ("tx", "مقام / Location", "loc", "")],
-        "civil engineer providing structural design, concrete, foundations, ACI/ASCE standards, safety"
-    ),
-    "🧪 کیمیکل انجینئرنگ": (
-        "کیمیائی عمل، پلانٹس / Chemical Engineering",
+        "civil engineer providing structural design, concrete, foundations, ACI/ASCE standards"),
+    "🧪 کیمیکل انجینئرنگ": ("کیمیائی عمل، پلانٹس",
         [("ta", "موضوع / Topic", "t", "")],
-        "chemical engineer explaining processes, reactors, distillation, mass/energy balance, safety"
-    ),
-    "✈️ ایرو اسپیس انجینئرنگ": (
-        "ہوائی جہاز، راکٹ / Aerospace Engineering",
+        "chemical engineer explaining processes, reactors, distillation, mass/energy balance"),
+    "✈️ ایرو اسپیس انجینئرنگ": ("ہوائی جہاز، راکٹ",
         [("ta", "موضوع / Topic", "t", "")],
-        "aerospace engineer covering aerodynamics, propulsion, structures, orbital mechanics"
-    ),
-
-    # 🏛️ LAW & FINANCE
-    "🏛️ وکیل / قانونی مشیر": (
-        "قانونی معاملات، معاہدے / Lawyer & Legal Advisor",
+        "aerospace engineer covering aerodynamics, propulsion, structures, orbital mechanics"),
+    "⚡ الیکٹریکل انجینئرنگ": ("Power, Circuits, Machines",
+        [("ta", "موضوع / Topic", "t", "")],
+        "electrical engineer covering power systems, circuits, machines, electronics, standards"),
+    "⚙️ مکینیکل انجینئرنگ": ("Thermo, Mechanics, Design",
+        [("ta", "موضوع / Topic", "t", "")],
+        "mechanical engineer covering thermodynamics, mechanics, machine design, manufacturing"),
+    # Law & Finance
+    "🏛️ وکیل / قانونی مشیر": ("قانونی معاملات، معاہدے",
         [("tx", "قسم / Type", "type", "معاہدہ، مقدمہ، ٹیکس"),
          ("ta", "تفصیل / Details", "d", "")],
-        "legal advisor providing contract drafting, legal opinions, dispute resolution, Pakistani/international law"
-    ),
-    "🧮 اکاؤنٹنگ / ٹیکس": (
-        "حساب، ٹیکس، بجٹ / Accounting & Tax",
+        "legal advisor providing contract drafting, legal opinions, dispute resolution"),
+    "🧮 اکاؤنٹنگ / ٹیکس": ("حساب، ٹیکس، بجٹ",
         [("tx", "قسم / Type", "type", "بک کیپنگ، ٹیکس، آڈٹ"),
          ("ta", "تفصیل / Details", "d", "")],
-        "chartered accountant covering bookkeeping, financial statements, tax, audit, IFRS"
-    ),
-    "📊 اسٹاک مارکیٹ / ٹریڈنگ": (
-        "سرمایہ کاری، ٹریڈنگ / Stock Market & Trading",
+        "chartered accountant covering bookkeeping, financial statements, tax, audit, IFRS"),
+    "📊 اسٹاک مارکیٹ / ٹریڈنگ": ("سرمایہ کاری، ٹریڈنگ",
         [("tx", "مارکیٹ / Market", "m", "PSX, NYSE, Crypto"),
          ("ta", "سوال / Question", "q", "")],
-        "stock analyst providing market analysis, technical/fundamental analysis, strategies, risk management"
-    ),
-
-    # 🎓 EDUCATION & LANGUAGE
-    "🎓 تعلیم / ٹیوٹر": (
-        "کورسز، امتحانات، نوٹس / Education & Tutor",
+        "stock analyst providing market analysis, technical/fundamental analysis, strategies"),
+    # Education
+    "🎓 تعلیم / ٹیوٹر": ("کورسز، امتحانات، نوٹس",
         [("tx", "مضمون / Subject", "sub", ""),
          ("tx", "کلاس / Class", "cls", ""),
          ("ta", "سوال / Question", "q", "")],
-        "expert tutor explaining concepts, solving problems, exam prep, study plans"
-    ),
-    "🌍 ترجمہ / Translation": (
-        "تمام زبانیں / Translation",
-        [("se", "سے / From", "fr", ["Urdu", "English", "Arabic", "Hindi", "Persian", "Chinese", "French", "German", "Spanish"]),
-         ("se", "تک / To", "to", ["English", "Urdu", "Arabic", "Hindi", "Persian", "Chinese", "French", "German", "Spanish"]),
+        "expert tutor explaining concepts, solving problems, exam prep, study plans"),
+    "🌍 ترجمہ / Translation": ("تمام زبانیں",
+        [("se", "سے / From", "fr", ["Urdu", "English", "Arabic", "Hindi", "Persian", "Chinese"]),
+         ("se", "تک / To", "to", ["English", "Urdu", "Arabic", "Hindi", "Persian", "Chinese"]),
          ("ta", "متن / Text", "txt", "")],
-        "professional translator translating accurately while preserving meaning, tone, and cultural nuance"
-    ),
-    "✍️ پروف ریڈنگ / ایڈیٹنگ": (
-        "غلطیاں درست / Proofreading",
+        "professional translator translating accurately while preserving meaning, tone"),
+    "✍️ پروف ریڈنگ / ایڈیٹنگ": ("غلطیاں درست",
         [("ta", "متن / Text", "txt", "")],
-        "professional editor proofreading and improving text: grammar, style, clarity, flow, format"
-    ),
-    "📚 کتاب / ناول لکھنا": (
-        "کہانی، پلاٹ / Book Writing",
+        "professional editor proofreading and improving text: grammar, style, clarity"),
+    "📚 کتاب / ناول لکھنا": ("کہانی، پلاٹ",
         [("tx", "قسم / Type", "type", "ناول، کہانی، شاعری"),
          ("ta", "خیال / Idea", "idea", "")],
-        "expert author providing plot outline, character development, writing tips, chapter structure"
-    ),
-
-    # 🌾 LIFE & HOME
-    "🌾 زراعت / کاشتکاری": (
-        "فصلیں، کیڑے، کھاد / Agriculture",
+        "expert author providing plot outline, character development, writing tips"),
+    # Life
+    "🌾 زراعت / کاشتکاری": ("فصلیں، کیڑے، کھاد",
         [("tx", "فصل / Crop", "crop", ""),
          ("ta", "سوال / Question", "q", "")],
-        "agricultural expert covering crop management, pests, fertilizers, irrigation, modern farming"
-    ),
-    "🍳 کھانا پکانا / ریسپی": (
-        "ریسپیز، ڈائٹ پلان / Cooking & Recipes",
+        "agricultural expert covering crop management, pests, fertilizers, irrigation"),
+    "🍳 کھانا پکانا / ریسپی": ("ریسپیز، ڈائٹ پلان",
         [("tx", "ڈش / Dish", "dish", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "master chef providing recipes, cooking techniques, ingredient substitutes, plating"
-    ),
-    "💪 جم / فٹنس / ڈائٹ": (
-        "ورزش، ڈائٹ چارٹ / Fitness & Diet",
+        "master chef providing recipes, cooking techniques, ingredient substitutes, plating"),
+    "💪 جم / فٹنس / ڈائٹ": ("ورزش، ڈائٹ چارٹ",
         [("tx", "مقصد / Goal", "goal", "Weight Loss, Muscle Gain, Fitness"),
          ("tx", "عمر / Age", "age", ""),
          ("tx", "قد/وزن / Height/Weight", "hw", "")],
-        "certified fitness trainer and nutritionist providing workout plans, diet charts, supplement guidance"
-    ),
-    "🧘 یوگا / مراقبہ": (
-        "یوگا، مراقبہ، روحانیت / Yoga & Meditation",
+        "certified fitness trainer and nutritionist providing workout plans, diet charts"),
+    "🧘 یوگا / مراقبہ": ("یوگا، مراقبہ، روحانیت",
         [("tx", "مقصد / Goal", "goal", ""),
          ("ta", "سوال / Question", "q", "")],
-        "yoga instructor and meditation guide teaching asanas, pranayama, mindfulness, spiritual practices"
-    ),
-
-    # ✈️ TRAVEL
-    "✈️ ٹریول / سیاحت": (
-        "ویزا، ٹکٹ، ہوٹل، ٹور / Travel & Tourism",
+        "yoga instructor and meditation guide teaching asanas, pranayama, mindfulness"),
+    # Travel
+    "✈️ ٹریول / سیاحت": ("ویزا، ٹکٹ، ہوٹل، ٹور",
         [("tx", "منزل / Destination", "dest", ""),
          ("tx", "بجٹ / Budget", "budget", ""),
          ("tx", "دن / Days", "days", "")],
-        "travel expert providing itinerary, visa info, hotels, transport, budget planning, local tips"
-    ),
-
-    # 🎬 CREATIVE
-    "🎬 فلم / ڈرامہ اسکرپٹ": (
-        "کہانی، اسکرپٹ / Film & Drama Script",
+        "travel expert providing itinerary, visa info, hotels, transport, budget planning"),
+    # Creative
+    "🎬 فلم / ڈرامہ اسکرپٹ": ("کہانی، اسکرپٹ",
         [("tx", "قسم / Type", "type", "فلم، ڈرامہ، اشتہار"),
          ("ta", "خیال / Idea", "idea", "")],
-        "screenwriter providing complete script with scenes, dialogues, character arcs, screenplay format"
-    ),
-    "🎵 موسیقی کمپوزیشن": (
-        "دھن، راگ / Music Composition",
+        "screenwriter providing complete script with scenes, dialogues, character arcs"),
+    "🎵 موسیقی کمپوزیشن": ("دھن، راگ",
         [("tx", "اسٹائل / Style", "style", ""),
          ("tx", "موڈ / Mood", "mood", "")],
-        "music composer providing melody, chords, rhythm, arrangement, instrumentation, lyrics"
-    ),
-    "🎮 گیم ڈویلپمنٹ": (
-        "گیم آئیڈیا، ڈیزائن / Game Development",
+        "music composer providing melody, chords, rhythm, arrangement, instrumentation"),
+    "🎮 گیم ڈویلپمنٹ": ("گیم آئیڈیا، ڈیزائن",
         [("tx", "قسم / Type", "type", "2D, 3D, Mobile, PC"),
          ("tx", "انجن / Engine", "eng", "Unity, Unreal, Godot"),
          ("ta", "خیال / Idea", "idea", "")],
-        "game designer providing complete GDD, mechanics, levels, art style, sample code"
-    ),
-
-    # 🧠 TECH
-    "🧠 AI / ML": (
-        "AI ماڈلز، ٹریننگ / Artificial Intelligence",
+        "game designer providing complete GDD, mechanics, levels, art style, sample code"),
+    # Tech
+    "🧠 AI / ML": ("AI ماڈلز، ٹریننگ",
         [("tx", "موضوع / Topic", "t", ""),
          ("se", "لیول / Level", "lvl", ["Beginner", "Intermediate", "Advanced"])],
-        "AI/ML engineer covering models, training, deployment, Python code, TensorFlow, PyTorch"
-    ),
-    "🤖 روبوٹکس / IoT": (
-        "روبوٹ، سینسر / Robotics & IoT",
+        "AI/ML engineer covering models, training, deployment, Python code, TensorFlow"),
+    "🤖 روبوٹکس / IoT": ("روبوٹ، سینسر",
         [("tx", "پروجیکٹ / Project", "p", ""),
          ("tx", "ہارڈویئر / Hardware", "hw", "Arduino, Raspberry Pi, ESP32")],
-        "robotics/IoT engineer providing circuit, code, sensor integration, automation projects"
-    ),
-    "🚀 اسٹارٹ اپ / بزنس پلان": (
-        "بزنس آئیڈیا، پچ ڈیک / Startup & Business",
+        "robotics/IoT engineer providing circuit, code, sensor integration, automation"),
+    "🚀 اسٹارٹ اپ / بزنس پلان": ("بزنس آئیڈیا، پچ ڈیک",
         [("ta", "آئیڈیا / Idea", "idea", ""),
          ("tx", "مارکیٹ / Market", "market", "")],
-        "startup advisor providing business model, pitch deck, financials, go-to-market, fundraising"
-    ),
-    "📊 ڈیٹا سائنس": (
-        "ڈیٹا، گراف، پریڈکشن / Data Science",
+        "startup advisor providing business model, pitch deck, financials, go-to-market"),
+    "📊 ڈیٹا سائنس": ("ڈیٹا، گراف، پریڈکشن",
         [("tx", "موضوع / Topic", "t", ""),
          ("ta", "ڈیٹا / Data", "d", "")],
-        "data scientist providing analysis, visualization, ML models, Python code, insights"
-    ),
-    "📊 ڈیٹا اینالیسز": (
-        "ڈیٹا تجزیہ / Data Analysis",
+        "data scientist providing analysis, visualization, ML models, Python code"),
+    "📊 ڈیٹا اینالیسز": ("ڈیٹا تجزیہ",
         [("ta", "ڈیٹا / Data", "d", ""),
          ("tx", "مقصد / Goal", "goal", "")],
-        "data analyst providing statistical analysis, Excel/Python formulas, trends, visualizations"
-    ),
-
-    # 🌍 SOCIAL & CULTURE
-    "🕌 اسلامیات / قرآن / حدیث": (
-        "تفسیر، احکام / Islamic Studies",
+        "data analyst providing statistical analysis, Excel/Python formulas, trends"),
+    # Culture
+    "🕌 اسلامیات / قرآن / حدیث": ("تفسیر، احکام",
         [("ta", "سوال / Question", "q", ""),
          ("tx", "موضوع / Topic", "t", "")],
-        "Islamic scholar providing Quran tafsir, Hadith references, fiqh rulings, with proper citations"
-    ),
-    "🏆 کھیل / کوچنگ": (
-        "کرکٹ، فٹبال، کوچنگ / Sports & Coaching",
+        "Islamic scholar providing Quran tafsir, Hadith references, fiqh rulings"),
+    "🏆 کھیل / کوچنگ": ("کرکٹ، فٹبال، کوچنگ",
         [("tx", "کھیل / Sport", "s", ""),
          ("ta", "سوال / Question", "q", "")],
-        "sports coach providing training, techniques, strategy, fitness, player development"
-    ),
-    "🎯 سپورٹس پریڈکشن": (
-        "میچ پریڈکشن / Sports Prediction",
+        "sports coach providing training, techniques, strategy, fitness"),
+    "🎯 سپورٹس پریڈکشن": ("میچ پریڈکشن",
         [("tx", "میچ / Match", "m", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "sports analyst providing match prediction, odds analysis, historical data, likely outcome"
-    ),
-    "💼 جاب / انٹرویو": (
-        "CV، انٹرویو تیاری / Job & Interview Prep",
+        "sports analyst providing match prediction, odds analysis, historical data"),
+    "💼 جاب / انٹرویو": ("CV، انٹرویو تیاری",
         [("tx", "پوزیشن / Position", "pos", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "career coach providing CV, cover letter, interview prep, salary negotiation"
-    ),
-
-    # 🏠 BUSINESS
-    "🏠 رئیل اسٹیٹ": (
-        "پراپرٹی، انویسٹمنٹ / Real Estate",
+        "career coach providing CV, cover letter, interview prep, salary negotiation"),
+    # Business
+    "🏠 رئیل اسٹیٹ": ("پراپرٹی، انویسٹمنٹ",
         [("tx", "قسم / Type", "type", "خرید، فروخت، کرایہ"),
          ("tx", "مقام / Location", "loc", "")],
-        "real estate expert providing property valuation, investment advice, legal, financing"
-    ),
-    "🛡️ بیمہ / انشورنس": (
-        "پالیسی، کلیم / Insurance",
+        "real estate expert providing property valuation, investment advice, legal"),
+    "🛡️ بیمہ / انشورنس": ("پالیسی، کلیم",
         [("tx", "قسم / Type", "type", "Life, Health, Auto, Property"),
          ("ta", "تفصیل / Details", "d", "")],
-        "insurance advisor explaining policies, coverage, claims, comparison, premium calculation"
-    ),
-    "🧾 بلنگ / انوائس": (
-        "بل بنانا / Billing & Invoice",
+        "insurance advisor explaining policies, coverage, claims, premium calculation"),
+    "🧾 بلنگ / انوائس": ("بل بنانا",
         [("tx", "کلائنٹ / Client", "c", ""),
          ("ta", "اشیاء / Items", "it", "name, qty, price per line")],
-        "accounting expert creating professional invoice with totals, tax, terms"
-    ),
-    "📦 ای کامرس / ڈراپ شپنگ": (
-        "Daraz، Amazon، Shopify / E-commerce",
+        "accounting expert creating professional invoice with totals, tax, terms"),
+    "📦 ای کامرس / ڈراپ شپنگ": ("Daraz، Amazon، Shopify",
         [("tx", "پلیٹ فارم / Platform", "p", "Daraz, Amazon, Shopify"),
          ("ta", "پروڈکٹ / Product", "prod", "")],
-        "e-commerce expert providing product sourcing, listing optimization, ads, order management"
-    ),
-    "🚚 لاجسٹکس / شپنگ": (
-        "ڈیلیوری / Logistics",
+        "e-commerce expert providing product sourcing, listing optimization, ads"),
+    "🚚 لاجسٹکس / شپنگ": ("ڈیلیوری",
         [("tx", "قسم / Type", "type", "Local, International"),
          ("ta", "تفصیل / Details", "d", "")],
-        "logistics expert providing shipping, customs, freight, supply chain, warehouse"
-    ),
-    "📊 ڈیٹا اینالٹکس": (
-        "Business Analytics",
+        "logistics expert providing shipping, customs, freight, supply chain, warehouse"),
+    "📊 ڈیٹا اینالٹکس": ("Business Analytics",
         [("ta", "ڈیٹا / Data", "d", ""),
          ("tx", "مقصد / Goal", "goal", "")],
-        "business analyst providing KPIs, dashboards, insights, recommendations"
-    ),
-
-    # 💼 FREELANCING PLATFORMS
-    "💼 Upwork": (
-        "Upwork Freelancing / اپ ورک",
+        "business analyst providing KPIs, dashboards, insights, recommendations"),
+    # Freelancing
+    "💼 Upwork": ("Upwork Freelancing",
         [("se", "قسم / Type", "type", ["Hourly", "Fixed Price", "Both"]),
          ("tx", "نیش / Niche", "n", ""),
          ("ta", "سوال / Question", "q", "")],
-        "Upwork expert providing profile optimization, proposals, hourly vs fixed strategy, client management"
-    ),
-    "💰 Upwork Hourly": (
-        "Upwork Hourly Pay / اپ ورک پے آور",
+        "Upwork expert providing profile optimization, proposals, hourly vs fixed strategy"),
+    "💰 Upwork Hourly": ("Upwork Hourly Pay",
         [("tx", "نیش / Niche", "n", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "Upwork expert providing hourly rate strategy, time tracking, contracts, Top Rated tips"
-    ),
-    "🎨 Fiverr": (
-        "Fiverr Gigs / فائیور",
+        "Upwork expert providing hourly rate strategy, time tracking, contracts, Top Rated tips"),
+    "🎨 Fiverr": ("Fiverr Gigs",
         [("tx", "گیگ / Gig", "g", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "Fiverr expert providing gig optimization, pricing, buyer requests, level progression"
-    ),
-    "⏰ PeoplePerHour": (
-        "PPH Freelancing / پیپل پر آور",
+        "Fiverr expert providing gig optimization, pricing, buyer requests, level progression"),
+    "⏰ PeoplePerHour": ("PPH Freelancing",
         [("tx", "نیش / Niche", "n", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "PeoplePerHour expert providing proposals, hourly, packages, client acquisition"
-    ),
-    "💼 LinkedIn": (
-        "LinkedIn Marketing / لنکڈ لنک",
+        "PeoplePerHour expert providing proposals, hourly, packages, client acquisition"),
+    "💼 LinkedIn": ("LinkedIn Marketing",
         [("tx", "مقصد / Goal", "g", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "LinkedIn expert providing profile optimization, content strategy, lead generation, B2B"
-    ),
-    "📸 Instagram": (
-        "Instagram Marketing / انسٹا گرام",
+        "LinkedIn expert providing profile optimization, content strategy, lead generation, B2B"),
+    "📸 Instagram": ("Instagram Marketing",
         [("tx", "نیش / Niche", "n", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "Instagram expert providing content plan, reels strategy, hashtags, growth, monetization"
-    ),
-    "👻 Snapchat": (
-        "Snapchat Marketing / اسنیپ",
+        "Instagram expert providing content plan, reels strategy, hashtags, growth"),
+    "👻 Snapchat": ("Snapchat Marketing",
         [("tx", "نیش / Niche", "n", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "Snapchat expert providing marketing, AR lenses, ads, growth strategy"
-    ),
-    "🛒 Etsy": (
-        "Etsy Selling / اٹسے",
+        "Snapchat expert providing marketing, AR lenses, ads, growth strategy"),
+    "🛒 Etsy": ("Etsy Selling",
         [("tx", "پروڈکٹ / Product", "p", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "Etsy expert providing shop setup, SEO, product photos, pricing, promotion"
-    ),
-    "📌 Pinterest Native": (
-        "Pinterest Marketing / پنٹرسٹ",
+        "Etsy expert providing shop setup, SEO, product photos, pricing, promotion"),
+    "📌 Pinterest Native": ("Pinterest Marketing",
         [("tx", "نیش / Niche", "n", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "Pinterest expert providing pins, boards, SEO, traffic strategy, monetization"
-    ),
-    "🐦 Twitter Marketing": (
-        "Twitter/X Marketing / ٹوئٹر",
+        "Pinterest expert providing pins, boards, SEO, traffic strategy, monetization"),
+    "🐦 Twitter Marketing": ("Twitter/X Marketing",
         [("tx", "نیش / Niche", "n", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "Twitter expert providing tweets, threads, engagement, growth, monetization"
-    ),
-
-    # 🔗 AFFILIATE & MARKETING
-    "🔗 Affiliate Marketing": (
-        "ایفیلیٹ مارکیٹنگ / Affiliate",
+        "Twitter expert providing tweets, threads, engagement, growth, monetization"),
+    # Affiliate & Marketing
+    "🔗 Affiliate Marketing": ("ایفیلیٹ مارکیٹنگ",
         [("tx", "پروڈکٹ / Product", "p", ""),
          ("tx", "پلیٹ فارم / Platform", "plt", "Amazon, ClickBank, Digistore")],
-        "affiliate marketer providing niche, offers, traffic, content, conversion optimization"
-    ),
-    "🤝 B2B Marketing": (
-        "Business to Business / بی ٹو بی",
+        "affiliate marketer providing niche, offers, traffic, content, conversion optimization"),
+    "🤝 B2B Marketing": ("Business to Business",
         [("tx", "انڈسٹری / Industry", "ind", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "B2B marketing expert providing ABM, LinkedIn outreach, sales funnels, lead gen"
-    ),
-    "🛍️ B2C Marketing": (
-        "Business to Consumer / بی ٹو سی",
+        "B2B marketing expert providing ABM, LinkedIn outreach, sales funnels, lead gen"),
+    "🛍️ B2C Marketing": ("Business to Consumer",
         [("tx", "پروڈکٹ / Product", "p", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "B2C marketing expert providing consumer funnels, social ads, retention, LTV"
-    ),
-    "⚙️ Marketing Automation": (
-        "مارکیٹنگ آٹو میشن",
+        "B2C marketing expert providing consumer funnels, social ads, retention, LTV"),
+    "⚙️ Marketing Automation": ("مارکیٹنگ آٹو میشن",
         [("tx", "اوزار / Tool", "t", "HubSpot, Mailchimp, Zapier"),
          ("ta", "تفصیل / Details", "d", "")],
-        "marketing automation expert providing workflows, email sequences, CRM, integrations"
-    ),
-    "📝 Content Marketing": (
-        "کونٹینٹ مارکیٹنگ",
+        "marketing automation expert providing workflows, email sequences, CRM, integrations"),
+    "📝 Content Marketing": ("کونٹینٹ مارکیٹنگ",
         [("tx", "نیش / Niche", "n", ""),
          ("ta", "تفصیل / Details", "d", "")],
-        "content marketer providing strategy, calendars, SEO content, distribution, measurement"
-    ),
-    "🎬 3D Video Generation": (
-        "تھری ڈی ویڈیو جنریٹنگ",
+        "content marketer providing strategy, calendars, SEO content, distribution"),
+    "🎬 3D Video Generation": ("تھری ڈی ویڈیو جنریٹنگ",
         [("tx", "قسم / Type", "type", "Explainer, Product, Character"),
          ("ta", "تفصیل / Details", "d", "")],
-        "3D video expert providing script, storyboard, 3D workflow, tools, rendering"
-    ),
+        "3D video expert providing script, storyboard, 3D workflow, tools, rendering"),
+    # SEO & Ads
+    "📈 SEO On-Page": ("ویب سائٹ آپٹیمائزیشن",
+        [("tx", "URL", "url", ""),
+         ("tx", "کی ورڈز / Keywords", "kw", "")],
+        "SEO expert providing on-page optimization, meta tags, keywords, content strategy"),
+    "🔗 SEO Off-Page + Backlinks": ("بیک لنکس، گیسٹ پوسٹنگ",
+        [("tx", "ویب سائٹ / Website", "site", ""),
+         ("tx", "نیش / Niche", "n", "")],
+        "SEO expert providing backlink strategy, guest posting, 30+ link types, outreach"),
+    "✍️ کاپی رائٹنگ": ("پروفیشنل کاپی",
+        [("tx", "پروڈکٹ / Product", "p", ""),
+         ("se", "لہجہ / Tone", "tone", ["پروفیشنل", "دوستانه", "جذباتی", "Persuasive"])],
+        "professional copywriter providing headlines, ad copy, landing pages, email sequences"),
+    "📱 سوشل میڈیا منیجر": ("تمام پلیٹ فارمز",
+        [("se", "پلیٹ فارم / Platform", "p", ["YouTube", "Facebook", "Instagram", "LinkedIn", "TikTok"]),
+         ("tx", "نیش / Niche", "n", "")],
+        "social media expert providing content calendar, growth strategy, hashtags, monetization"),
+    "📢 ایڈز جنریٹر": ("Google, FB, YT, IG",
+        [("tx", "پروڈکٹ / Product", "p", ""),
+         ("se", "پلیٹ فارم / Platform", "plt", ["Google", "Facebook", "YouTube", "Instagram", "Email"])],
+        "ads expert providing campaign, copy, targeting, budget, creative ideas"),
+    "💰 آٹو مونیٹائزیشن": ("کمائی اور پیج",
+        [("se", "پلیٹ فارم / Platform", "p", ["YouTube", "Facebook", "Instagram", "TikTok", "Blog"]),
+         ("tx", "نیش / Niche", "n", "")],
+        "monetization expert providing eligibility, revenue, page creation, tax, legal"),
+    "🏢 Google Business Profile": ("GBP اور Local SEO",
+        [("tx", "بزنس / Business", "b", ""),
+         ("tx", "شہر / City", "c", "")],
+        "GBP expert providing setup, verification, photos, posts, reviews, local SEO"),
+    # Security & Web
+    "🔐 سائبر سیکیورٹی": ("ہیکنگ اور حفاظت",
+        [("se", "قسم / Type", "type", ["Security Guide", "Ethical Hacking", "PenTest", "Career"]),
+         ("ta", "سوال / Question", "q", "")],
+        "cybersecurity expert providing ethical hacking, penetration testing, security frameworks"),
+    "🌐 ویب ڈویلپمنٹ": ("HTML, CSS, JS, Python",
+        [("se", "ٹیکنالوجی / Tech", "tech", ["HTML+CSS+JS", "React", "Next.js", "Flask", "Django", "Node.js"]),
+         ("ta", "کیا بنانا ہے / What to build", "d", "")],
+        "web developer providing complete code, responsive design, best practices, deployment"),
+    "🎨 گرافک ڈیزائننگ": ("تصویر، لوگو، پوسٹر",
+        [("se", "اسٹائل / Style", "s", ["infographic", "realistic", "logo", "cartoon", "3d_avatar"]),
+         ("ta", "کیا بنانا ہے / What to create", "d", "")],
+        "graphic designer providing detailed design brief, color palette, layout, AI-generated visuals"),
+    "🎵 آڈیو + ویڈیو جنریشن": ("اسکرپٹ اور گانے",
+        [("tx", "موضوع / Topic", "t", ""),
+         ("se", "قسم / Type", "type", ["Video Script", "Song", "Voiceover"])],
+        "media expert providing scripts, storyboards, song lyrics, voiceover, music composition"),
+    "🧑‍🎤 3D اوتار": ("فیس، ہیئر، کلاتھ",
+        [("tx", "تفصیل / Description", "d", ""),
+         ("se", "قسم / Type", "type", ["Create Avatar", "Change Face", "Change Hair", "Change Clothes"])],
+        "3D artist providing avatar creation, character design, face/hair/cloth transformation"),
+    "💻 مکمل کوڈنگ": ("23 زبانیں",
+        [("se", "زبان / Language", "lang", ["Python", "Java", "JavaScript", "C", "C++", "C#", "Go", "Rust", "PHP", "Swift", "Kotlin", "Ruby", "TypeScript", "SQL"]),
+         ("ta", "کام / Task", "t", "")],
+        "senior developer providing complete code, comments, explanation, best practices"),
+    "🎮 کارٹون + 3D گیمز": ("گیم ڈویلپمنٹ",
+        [("tx", "گیم آئیڈیا / Game Idea", "g", ""),
+         ("se", "انجن / Engine", "e", ["Unity", "Unreal", "Godot", "Three.js"]),
+         ("se", "پلیٹ فارم / Platform", "p", ["PC", "Mobile", "Web", "Console"])],
+        "game designer providing complete GDD, mechanics, levels, art style, sample code"),
 }
 
 # ==========================================
@@ -736,7 +656,6 @@ with st.sidebar:
 
     st.markdown("---")
     st.subheader("🎨 فونٹس / Fonts")
-
     URDU_FONTS = {
         "جمیل نوری نستعلیق": "Jameel Noori Nastaleeq",
         "نوٹو نستعلیق اردو": "Noto Nastaliq Urdu",
@@ -744,9 +663,7 @@ with st.sidebar:
         "مہر نستعلیق": "Mehr Nastaleeq",
         "القلم تاج نستعلیق": "AlQalam Taj Nastaleeq",
     }
-    ENGLISH_FONTS = {
-        "Inter": "Inter", "Roboto": "Roboto", "Poppins": "Poppins", "Fira Code": "Fira Code",
-    }
+    ENGLISH_FONTS = {"Inter": "Inter", "Roboto": "Roboto", "Poppins": "Poppins", "Fira Code": "Fira Code"}
     s_uf = st.selectbox("اردو فونٹ:", list(URDU_FONTS.keys()), index=0)
     s_ef = st.selectbox("انگلش فونٹ:", list(ENGLISH_FONTS.keys()), index=0)
     active_u_font = URDU_FONTS[s_uf]
@@ -778,7 +695,6 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("🧭 شعبہ / Section")
 
-    # Special sections with custom UI (8)
     SPECIAL = [
         "💬 AI چیٹ (Universal)",
         "📚 ڈرائیو بکس / Drive Books",
@@ -787,7 +703,7 @@ with st.sidebar:
         "🎬 YouTube ٹرانسکرپٹ",
         "🎧 Whisper آڈیو",
         "🎙️ وائس اسٹوڈیو",
-        "🎨 گرافک ڈیزائننگ",
+        "🎨 گرافک ڈیزائننگ (Custom)",
     ]
     ALL_SECTIONS = SPECIAL + list(SECTIONS_CONFIG.keys())
     active_section = st.radio("", ALL_SECTIONS, index=0, label_visibility="collapsed")
@@ -796,7 +712,6 @@ with st.sidebar:
     if st.button("🗑️ چیٹ صاف کریں", use_container_width=True):
         st.session_state.messages = [{"role": "assistant", "content": "السلام علیکم!"}]
         st.rerun()
-
 
 # ==========================================
 # 8. CSS
@@ -832,7 +747,6 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-
 # ==========================================
 # 9. Groq Setup
 # ==========================================
@@ -843,26 +757,20 @@ if not groq_api_key:
 
 SYSTEM_PROMPT = """You are Master AI — the world's most versatile BILINGUAL (Urdu + English) multilingual agent.
 
-🌐 LANGUAGE RULE (MOST IMPORTANT):
+🌐 LANGUAGE RULE:
 - User asks in URDU → Answer in URDU
 - User asks in ENGLISH → Answer in English
 - Roman Urdu → Answer in Urdu
 - Mixed → Answer in both
-- NEVER force one language over another
 
-🎯 CRITICAL RULES:
-1. NEVER refuse ANY educational/professional question from ANY field.
-2. ALWAYS answer in the user's language.
-3. Provide comprehensive, accurate, professional-grade answers.
-4. For technical questions: formulas, calculations, examples, applications.
-5. When in doubt, be MORE detailed, not less.
-6. Include: definitions, examples, steps, best practices, common mistakes, tips, resources.
-7. For engineering: standards (IEC, IEEE, ISO, ASME), safety, best practices.
-8. For medical: diagnosis, tests, treatment, dosage, prevention.
-9. For legal: contracts, opinions, dispute resolution.
-10. Use proper Urdu script (نستعلیق), NOT Roman.
+🎯 RULES:
+1. NEVER refuse ANY educational question.
+2. Answer in user's language.
+3. Comprehensive, professional-grade answers.
+4. Include formulas, examples, steps, best practices.
+5. Be MORE detailed, not less.
+6. Use proper Urdu script (نستعلیق), NOT Roman.
 """
-
 
 def llm_call(prompt, primary_model=None, temp=0.3):
     if not primary_model:
@@ -873,15 +781,14 @@ def llm_call(prompt, primary_model=None, temp=0.3):
             llm = ChatGroq(groq_api_key=groq_api_key, model_name=mid, temperature=temp)
             r = llm.invoke(prompt)
             c = (r.content or "").strip()
-            if c:
+            if c and len(c) > 5:
                 return c, mid
         except Exception:
             continue
-    return "جواب تیار نہیں / Could not generate.", primary_model
-
+    return "معذرت، اس وقت جواب نہیں بن سکا۔ دوبارہ کوشش کریں یا سوال آسان کریں۔", primary_model
 
 def voice_widget(text, key_prefix):
-    if st.button("🎙️ وائس بنائیں / Make Voice", key=f"{key_prefix}_v"):
+    if st.button("🎙️ وائس بنائیں", key=f"{key_prefix}_v"):
         with st.spinner("..."):
             a = create_voice(text[:800], selected_voice_id, selected_speed_rate, selected_pitch_val)
             if a:
@@ -891,24 +798,10 @@ def voice_widget(text, key_prefix):
                 st.download_button("📥 ڈاؤن لوڈ", data=a, file_name=f"{key_prefix}.mp3",
                                    mime="audio/mpeg", key=f"{key_prefix}_dl")
 
-
-def image_widget(prompt, style, key_prefix, w=1024, h=600):
-    if st.button("🎨 تصویر بنائیں / Make Image", key=f"{key_prefix}_img"):
-        with st.spinner("..."):
-            img = generate_ai_image(prompt, style, w, h) or fallback_image(prompt)
-            if img:
-                img.seek(0)
-                st.image(img)
-                img.seek(0)
-                st.download_button("📥 ڈاؤن لوڈ", data=img, file_name=f"{key_prefix}.png",
-                                   mime="image/png", key=f"{key_prefix}_img_dl")
-
-
 # ==========================================
 # 10. Universal Section Renderer
 # ==========================================
 def render_universal_section(section_name):
-    """تمام text-based سیکشنز کو خودکار رینڈر کرتا ہے۔"""
     caption, fields, expert_role = SECTIONS_CONFIG[section_name]
     st.header(section_name)
     st.caption(caption)
@@ -929,14 +822,13 @@ def render_universal_section(section_name):
             opts = field[3] if len(field) > 3 else []
             user_inputs[fkey] = st.selectbox(label, opts, key=unique_key)
 
-    if st.button("🚀 جواب حاصل کریں / Generate Answer", type="primary", key=f"{section_name}_btn"):
+    if st.button("🚀 جواب حاصل کریں", type="primary", key=f"{section_name}_btn"):
         non_empty = {k: v for k, v in user_inputs.items() if v and str(v).strip()}
         if not non_empty:
-            st.warning("کم از کم ایک فیلڈ بھریں / Fill at least one field.")
+            st.warning("کم از کم ایک فیلڈ بھریں")
             return
 
         user_data = "\n".join([f"• {k}: {v}" for k, v in non_empty.items()])
-
         prompt = f"""{SYSTEM_PROMPT}
 
 Act as an expert {expert_role}.
@@ -944,26 +836,23 @@ Act as an expert {expert_role}.
 User Input:
 {user_data}
 
-Provide a COMPLETE, PROFESSIONAL, ACTIONABLE answer in the user's language (Urdu if they wrote Urdu, English if English). Include:
+Provide a COMPLETE, PROFESSIONAL answer in the user's language. Include:
 1. Comprehensive explanation
-2. Step-by-step guide (where applicable)
-3. Examples and formulas (if technical)
-4. Best practices and common mistakes
-5. Practical tips and real-world applications
-6. Resources or references
-7. Any warnings or important notes
+2. Step-by-step guide
+3. Examples and formulas
+4. Best practices
+5. Practical tips
+6. References
+7. Warnings"""
 
-Be thorough, accurate, and professional-grade. Answer in user's language."""
-
-        with st.spinner("تیار کر رہا ہوں... / Generating..."):
+        with st.spinner("تیار کر رہا ہوں..."):
             resp, used = llm_call(prompt)
             st.markdown(resp)
             st.caption(f"⚡ {used}")
-            st.download_button("📥 جواب ڈاؤن لوڈ / Download",
-                               resp, f"{section_name.replace(' ','_')}.txt", "text/plain",
+            st.download_button("📥 جواب ڈاؤن لوڈ", resp,
+                               f"{section_name.replace(' ','_')}.txt", "text/plain",
                                key=f"{section_name}_dl")
             voice_widget(resp, section_name)
-
 
 # ==========================================
 # 11. Main Title
@@ -971,9 +860,8 @@ Be thorough, accurate, and professional-grade. Answer in user's language."""
 st.title("🧠 Master AI Multimodal OS")
 st.caption(f"76 شعبے · Bilingual · فونٹ: {active_u_font} · ماڈل: {sel_model_lbl}")
 
-
 # ==========================================
-# 12. SPECIAL SECTIONS (Custom UI)
+# 12. SPECIAL SECTIONS
 # ==========================================
 if active_section == "💬 AI چیٹ (Universal)":
     st.header("💬 AI چیٹ — ہر شعبے سے جواب")
@@ -982,10 +870,7 @@ if active_section == "💬 AI چیٹ (Universal)":
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "assistant",
             "content": "السلام علیکم! میں Master AI ہوں — 76 شعبوں کا ماہر۔\n\n"
-                       "اردو یا English میں کوئی بھی سوال پوچھیں — "
-                       "میڈیکل، انجینئرنگ، قانون، بزنس، ٹریول، مارکیٹنگ، کوڈنگ، "
-                       "ہر شعبے سے مکمل جواب دوں گا۔\n\n"
-                       "📚 گوگل ڈرائیو میں متعلقہ کتاب ہو گی تو وہ پہلے استعمال کروں گا۔"}]
+                       "اردو یا English میں کوئی بھی سوال پوچھیں۔"}]
 
     for m in st.session_state.messages:
         with st.chat_message(m["role"]):
@@ -1004,7 +889,7 @@ if active_section == "💬 AI چیٹ (Universal)":
                     books_content, status = search_drive_books(ui)
                     if status == "found" and books_content:
                         drive_ctx = f"\n\n[📚 Drive Books]:\n{books_content}\n"
-                        status_msg = "📚 ڈرائیو سے مواد ملا"
+                        status_msg = "📚 ڈرائیو سے مواد"
                     elif status == "not_relevant":
                         status_msg = "📚 ڈرائیو میں نہیں → 🌍 انٹرنیشنل"
                 except Exception:
@@ -1015,15 +900,31 @@ if active_section == "💬 AI چیٹ (Universal)":
                 st.markdown(resp)
                 st.caption(f"⚡ {used} | {status_msg}")
 
+                # 🎨 IMAGE with TRANSLATION FIX
                 if has_kw(ui, KEYWORDS_IMAGE):
-                    img = generate_ai_image(ui, "infographic") or fallback_image(ui)
-                    if img:
-                        img.seek(0)
-                        st.image(img)
-                        img.seek(0)
-                        st.download_button("📥 تصویر", data=img, file_name="img.png",
-                                           mime="image/png", key="c_img")
+                    with st.spinner("🎨 تصویر بن رہی ہے (اردو → English ترجمہ)..."):
+                        # Translate Urdu to English for image generation
+                        translate_prompt = (
+                            f"Translate this prompt to a short, clear English description for image generation. "
+                            f"Only output the English text, nothing else, no quotes, no explanations. "
+                            f"Prompt: {ui}"
+                        )
+                        eng_prompt, _ = llm_call(translate_prompt, temp=0.1)
+                        # Validate translation
+                        if (not eng_prompt or "معذرت" in eng_prompt or "Could not" in eng_prompt
+                                or len(eng_prompt) > 250 or len(eng_prompt) < 3):
+                            eng_prompt = ui
 
+                        img = generate_ai_image(eng_prompt, "infographic") or fallback_image(eng_prompt)
+                        if img:
+                            img.seek(0)
+                            st.image(img, caption=f"Generated: {eng_prompt[:80]}")
+                            img.seek(0)
+                            st.download_button("📥 تصویر ڈاؤن لوڈ", data=img,
+                                               file_name="infographic.png", mime="image/png",
+                                               key="c_img_dl")
+
+                # 🎙️ VOICE
                 if has_kw(ui, KEYWORDS_VOICE):
                     va = create_voice(resp, selected_voice_id, selected_speed_rate, selected_pitch_val)
                     if va:
@@ -1032,18 +933,14 @@ if active_section == "💬 AI چیٹ (Universal)":
 
                 st.session_state.messages.append({"role": "assistant", "content": resp})
 
-
 elif active_section == "📚 ڈرائیو بکس / Drive Books":
     st.header("📚 ڈرائیو بکس + انٹرنیشنل سورسز")
-    st.caption("پہلے گوگل ڈرائیو کتب، نہ ملے تو عالمی ذرائع")
-
-    q = st.text_area("سوال / Question:", height=120, key="dk_q",
-                     placeholder="مثلاً: Ovario-Uterine Hysterectomy کے مراحل؟")
+    q = st.text_area("سوال / Question:", height=120, key="dk_q")
     force_intl = st.checkbox("صرف انٹرنیشنل ذرائع", key="dk_intl")
 
     if st.button("🔍 جواب تلاش کریں", type="primary", key="dk_btn"):
         if not q.strip():
-            st.warning("پہلے سوال لکھیں۔")
+            st.warning("سوال لکھیں")
         else:
             with st.spinner("..."):
                 drive_ctx = ""
@@ -1053,19 +950,15 @@ elif active_section == "📚 ڈرائیو بکس / Drive Books":
                     if status == "found" and bc:
                         drive_ctx = f"\n\n[📚 Drive]:\n{bc}\n"
                         source_info = "📚 گوگل ڈرائیو کتب"
-
-                prompt = f"{SYSTEM_PROMPT}{drive_ctx}\n\nسوال: {q}\n\nمکمل جواب اردو میں دیں۔"
+                prompt = f"{SYSTEM_PROMPT}{drive_ctx}\n\nسوال: {q}\n\nمکمل جواب دیں۔"
                 resp, used = llm_call(prompt)
                 st.markdown(resp)
                 st.caption(f"📖 {source_info} | ⚡ {used}")
                 st.download_button("📥 ڈاؤن لوڈ", resp, "answer.txt", "text/plain", key="dk_dl")
                 voice_widget(resp, "dk")
 
-
 elif active_section == "📸 OCR (تصویر سے متن)":
     st.header("📸 تصویر سے متن / Image to Text")
-    st.caption("اردو، English، ہندی، عربی — کسی بھی زبان کی تصویر")
-
     f = st.file_uploader("تصویر:", type=["png", "jpg", "jpeg", "webp"], key="ocr_f")
     extra = st.text_input("اضافی ہدایت:", key="ocr_x")
 
@@ -1087,7 +980,6 @@ elif active_section == "📸 OCR (تصویر سے متن)":
                            "ocr.txt", "text/plain", key="ocr_dl")
         voice_widget(st.session_state["ocr_t"], "ocr")
 
-
 elif active_section == "📄 PDF → انفوگرافک":
     st.header("📄 PDF → انفوگرافک")
     pdf = st.file_uploader("PDF:", type=["pdf"], key="pdf_f")
@@ -1108,10 +1000,16 @@ elif active_section == "📄 PDF → انفوگرافک":
         c1, c2 = st.columns(2)
         with c1:
             if st.button("🎨 انفوگرافک", key="pdf_inf"):
-                img = generate_ai_image(focus or pdf.name, "infographic") or fallback_image(focus or pdf.name)
-                if img:
-                    img.seek(0)
-                    st.image(img)
+                with st.spinner("..."):
+                    topic = focus or pdf.name
+                    tp = f"Translate to English for image: {topic}"
+                    eng, _ = llm_call(tp, temp=0.1)
+                    if not eng or len(eng) > 250:
+                        eng = topic
+                    img = generate_ai_image(eng, "infographic") or fallback_image(eng)
+                    if img:
+                        img.seek(0)
+                        st.image(img)
         with c2:
             if st.button("🧠 AI تجزیہ", key="pdf_ai"):
                 with st.spinner("..."):
@@ -1122,7 +1020,6 @@ elif active_section == "📄 PDF → انفوگرافک":
             st.markdown(st.session_state["pdf_a"])
         st.download_button("📥 ڈاؤن لوڈ", st.session_state["pdf_t"],
                            f"{pdf.name}.txt", "text/plain", key="pdf_dl")
-
 
 elif active_section == "🎬 YouTube ٹرانسکرپٹ":
     st.header("🎬 YouTube ٹرانسکرپٹ")
@@ -1146,12 +1043,11 @@ elif active_section == "🎬 YouTube ٹرانسکرپٹ":
 
     if "yt_t" in st.session_state:
         st.text_area("ٹرانسکرپٹ:", st.session_state["yt_t"], height=250, key="yt_ta")
-        st.download_button("📥", st.session_state["yt_t"], f"yt.txt", "text/plain", key="yt_dl")
+        st.download_button("📥", st.session_state["yt_t"], "yt.txt", "text/plain", key="yt_dl")
         voice_widget(st.session_state["yt_t"], "yt")
 
     if "yt_s" in st.session_state:
         st.markdown(st.session_state["yt_s"])
-
 
 elif active_section == "🎧 Whisper آڈیو":
     st.header("🎧 Whisper ٹرانسکرپشن")
@@ -1174,17 +1070,14 @@ elif active_section == "🎧 Whisper آڈیو":
         st.download_button("📥", st.session_state["wh_t"], "w.txt", "text/plain", key="wh_dl")
         voice_widget(st.session_state["wh_t"], "wh")
 
-
 elif active_section == "🎙️ وائس اسٹوڈیو":
     st.header("🎙️ وائس اسٹوڈیو پرو")
-    st.caption(f"آواز: {svl} | زبان: {vg} | رفتار: {ssl} | Pitch: {spl}")
-
-    txt = st.text_area("ٹیکسٹ:", height=200, key="vs_t",
-                       placeholder="اردو، English، हिन्दी، العربية...")
+    st.caption(f"آواز: {svl} | زبان: {vg} | رفتار: {ssl}")
+    txt = st.text_area("ٹیکسٹ:", height=200, key="vs_t")
 
     if st.button("🎵 آواز بنائیں", type="primary", key="vs_btn"):
         if not txt.strip():
-            st.warning("ٹیکسٹ لکھیں۔")
+            st.warning("ٹیکسٹ لکھیں")
         else:
             with st.spinner("..."):
                 a = generate_voice_edge(txt, selected_voice_id, selected_speed_rate, selected_pitch_val) or generate_voice_gtts(txt)
@@ -1197,41 +1090,44 @@ elif active_section == "🎙️ وائس اسٹوڈیو":
         st.download_button("📥 ڈاؤن لوڈ", st.session_state["vs_a"],
                            "voice.mp3", "audio/mpeg", key="vs_dl")
 
-
-elif active_section == "🎨 گرافک ڈیزائننگ":
+elif active_section == "🎨 گرافک ڈیزائننگ (Custom)":
     st.header("🎨 گرافک ڈیزائننگ + انفوگرافک")
+    st.caption("اردو میں لکھیں — خودکار ترجمہ ہو کر تصویر بنے گی")
+
     style = st.selectbox("اسٹائل:", ["infographic", "realistic", "logo", "cartoon",
                                        "3d_avatar", "anime", "cyberpunk", "sketch",
                                        "web_design", "game_asset", "engineering"], key="gd_s")
-    prompt = st.text_area("کیا بنانا ہے:", height=120, key="gd_p")
+    prompt = st.text_area("کیا بنانا ہے (اردو یا English):", height=120, key="gd_p")
     w = st.slider("چوڑائی:", 512, 2048, 1024, key="gd_w")
     h = st.slider("اونچائی:", 512, 2048, 600, key="gd_h")
 
     if st.button("🎨 تصویر بنائیں", type="primary", key="gd_btn"):
-        with st.spinner("..."):
-            img = generate_ai_image(prompt, style, w, h) or fallback_image(prompt, (w, h))
-            if img:
-                img.seek(0)
-                st.image(img)
-                img.seek(0)
-                st.download_button("📥 ڈاؤن لوڈ", img, f"{style}.png", "image/png", key="gd_dl")
-
+        if not prompt.strip():
+            st.warning("پہلے لکھیں کہ کیا بنانا ہے")
+        else:
+            with st.spinner("🎨 ترجمہ + تصویر بن رہی ہے..."):
+                # Auto-translate
+                tp = (f"Translate this to a short English image generation prompt. "
+                      f"Output only the English text, nothing else. Prompt: {prompt}")
+                eng, _ = llm_call(tp, temp=0.1)
+                if not eng or "معذرت" in eng or len(eng) > 250:
+                    eng = prompt
+                st.info(f"🌐 English: {eng[:200]}")
+                img = generate_ai_image(eng, style, w, h) or fallback_image(eng, (w, h))
+                if img:
+                    img.seek(0)
+                    st.image(img)
+                    img.seek(0)
+                    st.download_button("📥 ڈاؤن لوڈ", img, f"{style}.png", "image/png", key="gd_dl")
 
 # ==========================================
-# 13. UNIVERSAL SECTIONS (Config-Driven)
+# 13. UNIVERSAL SECTIONS
 # ==========================================
 elif active_section in SECTIONS_CONFIG:
     render_universal_section(active_section)
-
 
 # ==========================================
 # 14. Footer
 # ==========================================
 st.markdown("---")
-st.caption(
-    "🧠 *Master AI Multimodal OS* — 76 شعبے · Bilingual (اردو + English) · "
-    "Medical · Engineering · Law · Business · Education · Travel · Fitness · "
-    "Freelancing (Upwork, Fiverr, PPH, LinkedIn, Instagram, Etsy, Pinterest, Twitter) · "
-    "Marketing (B2B, B2C, Affiliate, Automation, Content) · SEO · Backlinks · Guest Posting · "
-    "Cybersecurity · Web Dev · Coding · Audio/Video · 3D · Games"
-)
+st.caption("🧠 *Master AI Multimodal OS* — 76 شعبے · Bilingual (اردو + English)")
