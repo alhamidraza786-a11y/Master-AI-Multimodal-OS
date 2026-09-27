@@ -124,7 +124,7 @@ def search_drive_books(user_query, max_files=10, max_pages=8):
         return None, f"error:{e}"
 
 # ==========================================
-# 2. Image Generation (WITH TRANSLATION FIX)
+# 2. Image Generation
 # ==========================================
 def generate_ai_image(prompt_text, style="infographic", width=1024, height=600):
     style_map = {
@@ -143,7 +143,7 @@ def generate_ai_image(prompt_text, style="infographic", width=1024, height=600):
     full_prompt = urllib.parse.quote(f"{prompt_text}, {style_map.get(style, '')}")
     url = f"https://image.pollinations.ai/prompt/{full_prompt}?width={width}&height={height}&nologo=true&model=flux"
     try:
-        r = requests.get(url, timeout=30)
+        r = requests.get(url, timeout=45)
         if r.status_code == 200 and len(r.content) > 1024:
             return io.BytesIO(r.content)
     except Exception as e:
@@ -346,10 +346,9 @@ st.set_page_config(page_title="Master AI Multimodal OS", page_icon="🧠",
                    layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
-# 6. UNIVERSAL SECTIONS CONFIG (76 Sections)
+# 6. UNIVERSAL SECTIONS CONFIG
 # ==========================================
 SECTIONS_CONFIG = {
-    # Medical
     "🏥 ہیومن میڈیسن": ("امراض، علامات، علاج، نسخے",
         [("ta", "علامات / Symptoms", "sym", "مثلاً: بخار، کھانسی"),
          ("tx", "عمر / Age", "age", "مثلاً: 35"),
@@ -370,7 +369,6 @@ SECTIONS_CONFIG = {
     "🔬 بائیو ٹیکنالوجی": ("جینیٹکس، لیب ورک",
         [("ta", "موضوع / Topic", "t", "")],
         "biotechnologist covering lab techniques, genetic engineering, CRISPR"),
-    # Engineering
     "🏗️ سول انجینئرنگ": ("عمارتیں، پل، سڑکیں",
         [("ta", "منصوبہ / Project", "p", ""),
          ("tx", "مقام / Location", "loc", "")],
@@ -387,7 +385,6 @@ SECTIONS_CONFIG = {
     "⚙️ مکینیکل انجینئرنگ": ("Thermo, Mechanics, Design",
         [("ta", "موضوع / Topic", "t", "")],
         "mechanical engineer covering thermodynamics, mechanics, machine design, manufacturing"),
-    # Law & Finance
     "🏛️ وکیل / قانونی مشیر": ("قانونی معاملات، معاہدے",
         [("tx", "قسم / Type", "type", "معاہدہ، مقدمہ، ٹیکس"),
          ("ta", "تفصیل / Details", "d", "")],
@@ -400,7 +397,6 @@ SECTIONS_CONFIG = {
         [("tx", "مارکیٹ / Market", "m", "PSX, NYSE, Crypto"),
          ("ta", "سوال / Question", "q", "")],
         "stock analyst providing market analysis, technical/fundamental analysis, strategies"),
-    # Education
     "🎓 تعلیم / ٹیوٹر": ("کورسز، امتحانات، نوٹس",
         [("tx", "مضمون / Subject", "sub", ""),
          ("tx", "کلاس / Class", "cls", ""),
@@ -418,7 +414,6 @@ SECTIONS_CONFIG = {
         [("tx", "قسم / Type", "type", "ناول، کہانی، شاعری"),
          ("ta", "خیال / Idea", "idea", "")],
         "expert author providing plot outline, character development, writing tips"),
-    # Life
     "🌾 زراعت / کاشتکاری": ("فصلیں، کیڑے، کھاد",
         [("tx", "فصل / Crop", "crop", ""),
          ("ta", "سوال / Question", "q", "")],
@@ -436,13 +431,11 @@ SECTIONS_CONFIG = {
         [("tx", "مقصد / Goal", "goal", ""),
          ("ta", "سوال / Question", "q", "")],
         "yoga instructor and meditation guide teaching asanas, pranayama, mindfulness"),
-    # Travel
     "✈️ ٹریول / سیاحت": ("ویزا، ٹکٹ، ہوٹل، ٹور",
         [("tx", "منزل / Destination", "dest", ""),
          ("tx", "بجٹ / Budget", "budget", ""),
          ("tx", "دن / Days", "days", "")],
         "travel expert providing itinerary, visa info, hotels, transport, budget planning"),
-    # Creative
     "🎬 فلم / ڈرامہ اسکرپٹ": ("کہانی، اسکرپٹ",
         [("tx", "قسم / Type", "type", "فلم، ڈرامہ، اشتہار"),
          ("ta", "خیال / Idea", "idea", "")],
@@ -456,7 +449,6 @@ SECTIONS_CONFIG = {
          ("tx", "انجن / Engine", "eng", "Unity, Unreal, Godot"),
          ("ta", "خیال / Idea", "idea", "")],
         "game designer providing complete GDD, mechanics, levels, art style, sample code"),
-    # Tech
     "🧠 AI / ML": ("AI ماڈلز، ٹریننگ",
         [("tx", "موضوع / Topic", "t", ""),
          ("se", "لیول / Level", "lvl", ["Beginner", "Intermediate", "Advanced"])],
@@ -477,7 +469,6 @@ SECTIONS_CONFIG = {
         [("ta", "ڈیٹا / Data", "d", ""),
          ("tx", "مقصد / Goal", "goal", "")],
         "data analyst providing statistical analysis, Excel/Python formulas, trends"),
-    # Culture
     "🕌 اسلامیات / قرآن / حدیث": ("تفسیر، احکام",
         [("ta", "سوال / Question", "q", ""),
          ("tx", "موضوع / Topic", "t", "")],
@@ -494,7 +485,6 @@ SECTIONS_CONFIG = {
         [("tx", "پوزیشن / Position", "pos", ""),
          ("ta", "تفصیل / Details", "d", "")],
         "career coach providing CV, cover letter, interview prep, salary negotiation"),
-    # Business
     "🏠 رئیل اسٹیٹ": ("پراپرٹی، انویسٹمنٹ",
         [("tx", "قسم / Type", "type", "خرید، فروخت، کرایہ"),
          ("tx", "مقام / Location", "loc", "")],
@@ -519,7 +509,6 @@ SECTIONS_CONFIG = {
         [("ta", "ڈیٹا / Data", "d", ""),
          ("tx", "مقصد / Goal", "goal", "")],
         "business analyst providing KPIs, dashboards, insights, recommendations"),
-    # Freelancing
     "💼 Upwork": ("Upwork Freelancing",
         [("se", "قسم / Type", "type", ["Hourly", "Fixed Price", "Both"]),
          ("tx", "نیش / Niche", "n", ""),
@@ -561,7 +550,6 @@ SECTIONS_CONFIG = {
         [("tx", "نیش / Niche", "n", ""),
          ("ta", "تفصیل / Details", "d", "")],
         "Twitter expert providing tweets, threads, engagement, growth, monetization"),
-    # Affiliate & Marketing
     "🔗 Affiliate Marketing": ("ایفیلیٹ مارکیٹنگ",
         [("tx", "پروڈکٹ / Product", "p", ""),
          ("tx", "پلیٹ فارم / Platform", "plt", "Amazon, ClickBank, Digistore")],
@@ -586,7 +574,6 @@ SECTIONS_CONFIG = {
         [("tx", "قسم / Type", "type", "Explainer, Product, Character"),
          ("ta", "تفصیل / Details", "d", "")],
         "3D video expert providing script, storyboard, 3D workflow, tools, rendering"),
-    # SEO & Ads
     "📈 SEO On-Page": ("ویب سائٹ آپٹیمائزیشن",
         [("tx", "URL", "url", ""),
          ("tx", "کی ورڈز / Keywords", "kw", "")],
@@ -615,7 +602,6 @@ SECTIONS_CONFIG = {
         [("tx", "بزنس / Business", "b", ""),
          ("tx", "شہر / City", "c", "")],
         "GBP expert providing setup, verification, photos, posts, reviews, local SEO"),
-    # Security & Web
     "🔐 سائبر سیکیورٹی": ("ہیکنگ اور حفاظت",
         [("se", "قسم / Type", "type", ["Security Guide", "Ethical Hacking", "PenTest", "Career"]),
          ("ta", "سوال / Question", "q", "")],
@@ -671,7 +657,11 @@ with st.sidebar:
 
     st.markdown("---")
     st.subheader("⚙️ ماڈل / Model")
-    MODELS = {"GPT-OSS 120B (Best)": "openai/gpt-oss-120b", "GPT-OSS 20B (Fast)": "openai/gpt-oss-20b"}
+    # ✅ FIXED: Valid Groq models
+    MODELS = {
+        "Llama 3.3 70B (Best)": "llama-3.3-70b-versatile",
+        "Llama 3.1 8B (Fast)": "llama-3.1-8b-instant",
+    }
     sel_model_lbl = st.selectbox("ماڈل:", list(MODELS.keys()), index=0)
     selected_model_id = MODELS[sel_model_lbl]
 
@@ -772,20 +762,33 @@ SYSTEM_PROMPT = """You are Master AI — the world's most versatile BILINGUAL (U
 6. Use proper Urdu script (نستعلیق), NOT Roman.
 """
 
+# ✅ FIXED: llm_call with real error + 3 model fallback
 def llm_call(prompt, primary_model=None, temp=0.3):
     if not primary_model:
         primary_model = selected_model_id
-    models = [primary_model, "openai/gpt-oss-20b" if "120b" in primary_model else "openai/gpt-oss-120b"]
-    for mid in models:
+    models_to_try = [
+        primary_model,
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+    ]
+    # Remove duplicates while preserving order
+    seen = set()
+    models_to_try = [m for m in models_to_try if not (m in seen or seen.add(m))]
+
+    last_error = ""
+    for mid in models_to_try:
         try:
             llm = ChatGroq(groq_api_key=groq_api_key, model_name=mid, temperature=temp)
             r = llm.invoke(prompt)
             c = (r.content or "").strip()
             if c and len(c) > 5:
                 return c, mid
-        except Exception:
+            last_error = f"خالی جواب ({mid})"
+        except Exception as e:
+            last_error = f"{mid}: {str(e)[:150]}"
+            print(f"Model {mid} failed: {e}")
             continue
-    return "معذرت، اس وقت جواب نہیں بن سکا۔ دوبارہ کوشش کریں یا سوال آسان کریں۔", primary_model
+    return f"⚠️ معذرت، جواب نہیں بن سکا۔\n\n*اصل وجہ:* {last_error}", primary_model
 
 def voice_widget(text, key_prefix):
     if st.button("🎙️ وائس بنائیں", key=f"{key_prefix}_v"):
@@ -797,6 +800,24 @@ def voice_widget(text, key_prefix):
                 a.seek(0)
                 st.download_button("📥 ڈاؤن لوڈ", data=a, file_name=f"{key_prefix}.mp3",
                                    mime="audio/mpeg", key=f"{key_prefix}_dl")
+
+# ✅ FIXED: Auto-translate function for Urdu → English
+def translate_to_english(urdu_text):
+    """اردو پرومپٹ کو انگریزی میں ترجمہ کرتا ہے تصویر بنانے کے لیے۔"""
+    try:
+        prompt = (
+            f"Translate the following to a SHORT English image generation prompt. "
+            f"Output ONLY the English text. No quotes, no explanation, no extra words.\n\n"
+            f"Urdu: {urdu_text}\n\nEnglish:"
+        )
+        eng, _ = llm_call(prompt, temp=0.1)
+        # Validate
+        if (not eng or "معذرت" in eng or "⚠️" in eng or
+                len(eng) > 250 or len(eng) < 3):
+            return urdu_text  # fallback to original
+        return eng.strip().strip('"').strip("'")
+    except Exception:
+        return urdu_text
 
 # ==========================================
 # 10. Universal Section Renderer
@@ -900,21 +921,11 @@ if active_section == "💬 AI چیٹ (Universal)":
                 st.markdown(resp)
                 st.caption(f"⚡ {used} | {status_msg}")
 
-                # 🎨 IMAGE with TRANSLATION FIX
+                # 🎨 IMAGE with TRANSLATION
                 if has_kw(ui, KEYWORDS_IMAGE):
-                    with st.spinner("🎨 تصویر بن رہی ہے (اردو → English ترجمہ)..."):
-                        # Translate Urdu to English for image generation
-                        translate_prompt = (
-                            f"Translate this prompt to a short, clear English description for image generation. "
-                            f"Only output the English text, nothing else, no quotes, no explanations. "
-                            f"Prompt: {ui}"
-                        )
-                        eng_prompt, _ = llm_call(translate_prompt, temp=0.1)
-                        # Validate translation
-                        if (not eng_prompt or "معذرت" in eng_prompt or "Could not" in eng_prompt
-                                or len(eng_prompt) > 250 or len(eng_prompt) < 3):
-                            eng_prompt = ui
-
+                    with st.spinner("🎨 ترجمہ + تصویر..."):
+                        eng_prompt = translate_to_english(ui)
+                        st.info(f"🌐 English: {eng_prompt[:180]}")
                         img = generate_ai_image(eng_prompt, "infographic") or fallback_image(eng_prompt)
                         if img:
                             img.seek(0)
@@ -1000,12 +1011,10 @@ elif active_section == "📄 PDF → انفوگرافک":
         c1, c2 = st.columns(2)
         with c1:
             if st.button("🎨 انفوگرافک", key="pdf_inf"):
-                with st.spinner("..."):
+                with st.spinner("🎨 ترجمہ + تصویر..."):
                     topic = focus or pdf.name
-                    tp = f"Translate to English for image: {topic}"
-                    eng, _ = llm_call(tp, temp=0.1)
-                    if not eng or len(eng) > 250:
-                        eng = topic
+                    eng = translate_to_english(topic)
+                    st.info(f"🌐 English: {eng[:180]}")
                     img = generate_ai_image(eng, "infographic") or fallback_image(eng)
                     if img:
                         img.seek(0)
@@ -1106,12 +1115,7 @@ elif active_section == "🎨 گرافک ڈیزائننگ (Custom)":
             st.warning("پہلے لکھیں کہ کیا بنانا ہے")
         else:
             with st.spinner("🎨 ترجمہ + تصویر بن رہی ہے..."):
-                # Auto-translate
-                tp = (f"Translate this to a short English image generation prompt. "
-                      f"Output only the English text, nothing else. Prompt: {prompt}")
-                eng, _ = llm_call(tp, temp=0.1)
-                if not eng or "معذرت" in eng or len(eng) > 250:
-                    eng = prompt
+                eng = translate_to_english(prompt)
                 st.info(f"🌐 English: {eng[:200]}")
                 img = generate_ai_image(eng, style, w, h) or fallback_image(eng, (w, h))
                 if img:
